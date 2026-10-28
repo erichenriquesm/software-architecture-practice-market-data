@@ -6,7 +6,9 @@
 #   make migrate-status                  list every migration and whether it ran
 #   make migrate-fresh                   drop every table and migrate again
 #   make migration name=create_x_table   create src/infra/database/migrations/<timestamp>_create_x_table.ts
-#   make projections-rebuild             empty the *_view tables and replay them from the marketData.matchingLog stream
+#   make projections-rebuild-prepare     empty marketData.replay before matching republishes
+#   make projections-rebuild             empty the *_view tables and apply marketData.replay until replayCompleted
+#                                        (the whole flow, with the republish in matching: make projections-rebuild in backend/)
 #   make deps                            install node_modules and generate the gRPC code on your machine, for the editor
 #
 # Tests (all in containers; the platform does not need to be up):
@@ -17,7 +19,7 @@
 COMPOSE = docker compose -f ../docker-compose.yml
 MIGRATIONS = src/infra/database/migrations
 
-.PHONY: migrate migrate-rollback migrate-status migrate-fresh migration projections-rebuild deps test test-unit test-integration
+.PHONY: migrate migrate-rollback migrate-status migrate-fresh migration projections-rebuild-prepare projections-rebuild deps test test-unit test-integration
 
 migrate:
 	$(COMPOSE) exec market-data-api npm run --silent migrate
@@ -34,6 +36,9 @@ migrate-fresh:
 migration:
 	@test -n "$(name)" || (echo "usage: make migration name=create_x_table" && exit 1)
 	$(COMPOSE) run --rm --no-deps -v $(CURDIR)/$(MIGRATIONS):/app/$(MIGRATIONS) market-data-api npm run --silent make:migration -- $(name)
+
+projections-rebuild-prepare:
+	$(COMPOSE) exec market-data-worker npm run --silent projections:rebuild-prepare
 
 projections-rebuild:
 	$(COMPOSE) exec market-data-worker npm run --silent projections:rebuild

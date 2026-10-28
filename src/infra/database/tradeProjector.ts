@@ -78,7 +78,7 @@ const addToCandle = async (trx: Transaction<Database>, trade: ExecutedTrade, exe
 
 /**
  * trade_view and candle_1m_view in the caller's transaction. The candle only counts a trade that has just entered
- * trade_view, so neither a redelivery nor a replay of the stream adds its volume twice. Returns whether it was new.
+ * trade_view, so neither a redelivery nor a rebuild adds its volume twice. Returns whether it was new.
  */
 export const projectTrade = async (trx: Transaction<Database>, trade: ExecutedTrade): Promise<boolean> => {
   const executedAt = new Date(trade.executedAt);

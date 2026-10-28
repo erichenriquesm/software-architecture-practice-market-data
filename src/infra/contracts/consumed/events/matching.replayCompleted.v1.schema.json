@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trading.local/contracts/matching.replayCompleted.v1.schema.json",
+  "title": "matching.replayCompleted v1 payload (end marker of a history republish, sent only to rebuild projections)",
+  "type": "object",
+  "required": [
+    "trades",
+    "snapshots"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "trades": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "snapshots": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

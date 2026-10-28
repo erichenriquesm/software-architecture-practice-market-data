@@ -6,7 +6,7 @@ Dados de Mercado: profundidade do livro com precisão, histórico de negociaçõ
 
 ## O que faz
 
-Responde as consultas públicas de mercado a partir de projeções dos eventos do `matching`: profundidade agregada por faixa de preço, negociações e estatísticas (spread, mínimo, máximo, volume) numa janela móvel de 24 h. Não decide nada e não publica eventos; as projeções podem ser reconstruídas do zero pelo stream do RabbitMQ.
+Responde as consultas públicas de mercado a partir de projeções dos eventos do `matching`: profundidade agregada por faixa de preço, negociações e estatísticas (spread, mínimo, máximo, volume) numa janela móvel de 24 h. Não decide nada e não publica eventos; as projeções podem ser reconstruídas do zero pelo histórico que o `matching` republica (o broker só transporta).
 
 A especificação completa (modelo, casos de uso, dados, testes) está na spec do serviço: [`sdd/services/market-data.md`](https://github.com/erichenriquesm/software-architecture-practice/blob/main/sdd/services/market-data.md). As regras de arquitetura valem para todos os serviços: [`sdd/01-principios.md`](https://github.com/erichenriquesm/software-architecture-practice/blob/main/sdd/01-principios.md).
 
@@ -23,7 +23,7 @@ A especificação completa (modelo, casos de uso, dados, testes) está na spec d
 ## Eventos (RabbitMQ)
 
 - **Publica:** Nenhum.
-- **Consome:** `matching.tradeExecuted`, `matching.bookSnapshot` (e o stream `marketData.matchingLog` para reconstruir as projeções: `make projections-rebuild`)
+- **Consome:** `matching.tradeExecuted`, `matching.bookSnapshot` (e a fila `marketData.replay`, só no rebuild das projeções: `make projections-rebuild` em `backend/`)
 
 Os contratos ficam em `src/infra/contracts/`: `published/` (este serviço é o dono) e `consumed/` (cópias do que ele consome, conferidas pelo `make check` do repositório guarda-chuva).
 

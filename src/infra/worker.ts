@@ -5,7 +5,7 @@ import { registerHealthRoutes } from './http/health.js';
 import { bookHandler, bookQueue } from './messaging/consumers/bookConsumer.js';
 import { classifyMarketDataFailure } from './messaging/consumers/consumedEvent.js';
 import { tradesHandler, tradesQueue } from './messaging/consumers/tradesConsumer.js';
-import { declareMatchingLog, matchingLog } from './messaging/matchingLog.js';
+import { declareReplayQueue, replayQueue } from './messaging/replayQueue.js';
 import type { AmqpConnection } from './platform/messaging/connection.js';
 import { connectRabbitMq, rabbitMqUrlFromEnv } from './platform/messaging/connection.js';
 import type { ConsumerOptions } from './platform/messaging/consumer.js';
@@ -37,8 +37,8 @@ const startConsumer = async (connection: AmqpConnection, options: Omit<ConsumerO
 /** Everything that lives on a broker connection; rebuilt from scratch on every reconnection. */
 const attach = async (connection: AmqpConnection): Promise<() => Promise<void>> => {
   const topology = await connection.createChannel();
-  await topology.checkExchange(matchingLog.exchange);
-  await declareMatchingLog(topology);
+  await topology.checkExchange(replayQueue.exchange);
+  await declareReplayQueue(topology);
   await topology.close();
   const consumers = await Promise.all(consumerOptions.map((options) => startConsumer(connection, options)));
   return async () => {

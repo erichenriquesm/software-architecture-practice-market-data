@@ -20,7 +20,8 @@
     "migrate:status": "tsx src/infra/migrate.ts status",
     "migrate:fresh": "tsx src/infra/migrate.ts fresh",
     "make:migration": "tsx src/infra/migrate.ts make",
-    "projections:rebuild": "tsx src/infra/rebuild.ts"
+    "projections:rebuild": "tsx src/infra/rebuild.ts",
+    "projections:rebuild-prepare": "tsx src/infra/rebuild.ts prepare"
   },
   "dependencies": {
     "ajv": "8.20.0",
