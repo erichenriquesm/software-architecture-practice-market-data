@@ -52,7 +52,7 @@ export interface MarketDataApiDependencies extends MarketDataCoreDependencies {
   readonly rateLimiter: RateLimiter;
   readonly rateLimits?: MarketDataRateLimits;
   readonly extraProbes?: readonly DependencyProbe[];
-  readonly trustProxy?: string[] | boolean;
+  readonly trustProxy?: (address: string, hop: number) => boolean;
   readonly logger?: boolean;
 }
 
