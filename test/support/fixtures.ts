@@ -5,7 +5,7 @@ import type { Envelope } from '../../src/infra/platform/messaging/envelope.js';
 import { createEnvelope } from '../../src/infra/platform/messaging/envelope.js';
 import { loadSchemaValidator } from '../../src/infra/platform/messaging/schemas.js';
 
-const consumed = (type: string) => loadSchemaValidator<Record<string, unknown>>(`src/infra/contracts/consumed/events/${type}.v1.schema.json`);
+const consumed = (type: string) => loadSchemaValidator<Record<string, unknown>>(`src/infra/schemas/consumed/events/${type}.v1.schema.json`);
 const tradeContract = consumed('matching.tradeExecuted');
 const snapshotContract = consumed('matching.bookSnapshot');
 

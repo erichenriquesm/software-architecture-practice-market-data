@@ -10,6 +10,17 @@ Responde as consultas públicas de mercado a partir de projeções dos eventos d
 
 A especificação completa (modelo, casos de uso, dados, testes) está na spec do serviço: [`sdd/services/market-data.md`](https://github.com/erichenriquesm/software-architecture-practice/blob/main/sdd/services/market-data.md). As regras de arquitetura valem para todos os serviços: [`sdd/01-principios.md`](https://github.com/erichenriquesm/software-architecture-practice/blob/main/sdd/01-principios.md).
 
+## Comece por aqui
+
+Um trade virando estatística, de ponta a ponta:
+
+1. `src/infra/messaging/consumers/tradesConsumer.ts`: recebe `matching.tradeExecuted`.
+2. `src/infra/database/tradeProjector.ts`: grava em `trade_view` e soma no candle do minuto (`candle_1m_view`).
+3. `src/infra/http/marketRoutes.ts`: a rota `GET /markets/:id` chama o caso de uso.
+4. `src/application/usecases/getMarket.ts`: calcula spread, mínimo, máximo e volume das últimas 24 h a partir das projeções.
+
+O livro segue o mesmo caminho: `bookConsumer.ts` → `bookProjector.ts` → `getDepth.ts`.
+
 ## API
 
 | Rota | O que faz |
@@ -25,7 +36,7 @@ A especificação completa (modelo, casos de uso, dados, testes) está na spec d
 - **Publica:** Nenhum.
 - **Consome:** `matching.tradeExecuted`, `matching.bookSnapshot` (e a fila `marketData.replay`, só no rebuild das projeções: `make projections-rebuild` em `backend/`)
 
-Os contratos ficam em `src/infra/contracts/`: `published/` (este serviço é o dono) e `consumed/` (cópias do que ele consome, conferidas pelo `make check` do repositório guarda-chuva).
+Os contratos ficam em `src/infra/schemas/`: `published/` (este serviço é o dono) e `consumed/` (cópias do que ele consome, conferidas pelo `make check` do repositório guarda-chuva).
 
 ## Como rodar
 
@@ -53,7 +64,7 @@ Dentro da pasta do serviço (`backend/market-data/`):
 ```
 src/
   application/   casos de uso, DTOs e contratos (interfaces)
-  infra/         HTTP, mensageria, banco, plataforma técnica, contratos de eventos
+  infra/         HTTP, mensageria, banco, plataforma técnica, schemas de eventos
 test/
   unit/  integration/  fakes/  support/
 docker/          Dockerfile e composes (só para ambiente local)

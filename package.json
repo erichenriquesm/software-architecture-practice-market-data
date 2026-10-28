@@ -6,7 +6,7 @@
     "node": ">=26"
   },
   "scripts": {
-    "proto:gen": "echo 'market-data has no .proto contracts'",
+    "proto:gen": "echo 'market-data has no .proto files'",
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json",
     "lint": "eslint .",

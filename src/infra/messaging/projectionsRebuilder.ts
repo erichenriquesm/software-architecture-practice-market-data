@@ -38,7 +38,7 @@ export class ReplayNotReceivedError extends Error {
  * projectors and without inbox (idempotent by tradeId, last-write-wins by sequence), until the replayCompleted marker.
  */
 export class ProjectionsRebuilder {
-  private readonly validateCompleted = loadSchemaValidator<RebuildResult['published']>(`src/infra/contracts/consumed/events/${replayCompletedType}.v1.schema.json`);
+  private readonly validateCompleted = loadSchemaValidator<RebuildResult['published']>(`src/infra/schemas/consumed/events/${replayCompletedType}.v1.schema.json`);
 
   constructor(
     private readonly db: Kysely<Database>,
