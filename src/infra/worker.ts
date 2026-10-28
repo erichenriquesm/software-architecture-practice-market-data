@@ -11,7 +11,6 @@ import { connectRabbitMq, rabbitMqUrlFromEnv } from './platform/messaging/connec
 import type { ConsumerOptions } from './platform/messaging/consumer.js';
 import { Consumer } from './platform/messaging/consumer.js';
 import { loadEnvelopeValidator } from './platform/messaging/envelope.js';
-import { ReconnectingConnection } from './platform/messaging/reconnectingConnection.js';
 import { declareConsumerQueue } from './platform/messaging/topology.js';
 import { healthPortSetting, postgresSettings } from './settings.js';
 
@@ -34,36 +33,37 @@ const startConsumer = async (connection: AmqpConnection, options: Omit<ConsumerO
   return consumer;
 };
 
-/** Everything that lives on a broker connection; rebuilt from scratch on every reconnection. */
-const attach = async (connection: AmqpConnection): Promise<() => Promise<void>> => {
-  const topology = await connection.createChannel();
-  await topology.checkExchange(replayQueue.exchange);
-  await declareReplayQueue(topology);
-  await topology.close();
-  const consumers = await Promise.all(consumerOptions.map((options) => startConsumer(connection, options)));
-  return async () => {
-    await Promise.all(consumers.map((consumer) => consumer.stop().catch(() => undefined)));
-  };
-};
-
-const broker = new ReconnectingConnection({
-  connect: () => connectRabbitMq(rabbitMqUrlFromEnv()),
-  setup: attach,
-  onEvent: (event, detail) => log.info({ event, detail: detail instanceof Error ? detail.message : detail }, 'rabbitmq connection'),
-});
+const connection = await connectRabbitMq(rabbitMqUrlFromEnv());
+let brokerUp = true;
+const topology = await connection.createChannel();
+await topology.checkExchange(replayQueue.exchange);
+await declareReplayQueue(topology);
+await topology.close();
+const consumers = await Promise.all(consumerOptions.map((options) => startConsumer(connection, options)));
 
 const healthServer = Fastify({ logger: false });
-registerHealthRoutes(healthServer, serviceName, [
-  new PostgresProbe(db),
-  { dependency: 'rabbitmq', isHealthy: async () => broker.isConnected() },
-]);
+registerHealthRoutes(healthServer, serviceName, [new PostgresProbe(db), { dependency: 'rabbitmq', isHealthy: async () => brokerUp }]);
 await healthServer.listen({ host: '0.0.0.0', port: healthPortSetting() });
-await broker.start();
 
+let stopping = false;
 const shutdown = async (): Promise<void> => {
-  await broker.stop();
+  stopping = true;
+  await Promise.all(consumers.map((consumer) => consumer.stop().catch(() => undefined)));
+  await connection.close().catch(() => undefined);
   await healthServer.close();
   await db.destroy();
 };
+
+/** No in-process reconnect: on a lost broker connection the worker exits and the container restarts it (the inbox makes it lossless). */
+const exitOnBrokerLoss = (reason: unknown): void => {
+  if (stopping) return;
+  brokerUp = false;
+  log.error({ detail: reason instanceof Error ? reason.message : reason }, 'rabbitmq connection lost, exiting');
+  // Exit at once: closing channels on a dead connection can hang, and the outbox + inbox make a hard exit safe.
+  process.exit(1);
+};
+connection.on('error', (error: unknown) => exitOnBrokerLoss(error));
+connection.on('close', () => exitOnBrokerLoss('closed'));
+
 process.once('SIGTERM', shutdown);
 process.once('SIGINT', shutdown);

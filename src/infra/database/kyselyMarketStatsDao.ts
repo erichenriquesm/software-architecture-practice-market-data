@@ -1,7 +1,6 @@
 import type { Kysely } from 'kysely';
 import { sql } from 'kysely';
-import type { MarketStatsDao } from '../../application/contracts/marketStatsDao.js';
-import type { TopOfBookView, TradeStatsView } from '../../application/dtos/marketStatsView.js';
+import type { MarketStatsDao, TopOfBookView, TradeStatsView } from '../../application/contracts/marketStatsDao.js';
 import type { Database } from './database.js';
 
 interface StatsRow {

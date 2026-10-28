@@ -1,5 +1,4 @@
-import type { MarketStatsDao } from '../../src/application/contracts/marketStatsDao.js';
-import type { TopOfBookView, TradeStatsView } from '../../src/application/dtos/marketStatsView.js';
+import type { MarketStatsDao, TopOfBookView, TradeStatsView } from '../../src/application/contracts/marketStatsDao.js';
 
 const empty: TradeStatsView = { min: null, max: null, volume: '0' };
 

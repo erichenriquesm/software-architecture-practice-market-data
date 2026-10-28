@@ -1,6 +1,5 @@
 import type { Kysely } from 'kysely';
-import type { DepthDao } from '../../application/contracts/depthDao.js';
-import type { DepthLevelView, DepthView } from '../../application/dtos/depthView.js';
+import type { DepthDao, DepthLevelView, DepthView } from '../../application/contracts/depthDao.js';
 import type { Database } from './database.js';
 
 interface DepthRow extends DepthLevelView {

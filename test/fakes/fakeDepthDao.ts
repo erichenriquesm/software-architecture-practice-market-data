@@ -1,5 +1,4 @@
-import type { DepthDao } from '../../src/application/contracts/depthDao.js';
-import type { DepthView } from '../../src/application/dtos/depthView.js';
+import type { DepthDao, DepthView } from '../../src/application/contracts/depthDao.js';
 
 export class FakeDepthDao implements DepthDao {
   readonly calls: { marketId: string; precision: number }[] = [];

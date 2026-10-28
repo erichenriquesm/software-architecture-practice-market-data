@@ -1,6 +1,6 @@
 x-watch: &watch
   watch:
-    - action: sync
+    - action: sync+restart
       path: ../src
       target: /app/src
       ignore: [infra/generated/, infra/schemas/]
@@ -36,7 +36,8 @@ services:
   market-data-api:
     build: { context: .., dockerfile: docker/Dockerfile, target: dev }
     container_name: market-data-api
-    command: ["sh", "-c", "npm run proto:gen && npx tsx watch src/infra/api.ts"]
+    restart: unless-stopped
+    command: ["sh", "-c", "npm run proto:gen && exec npx tsx src/infra/api.ts"]
     env_file: ../.env
     ports:
       - "127.0.0.1:3005:3000"
@@ -54,7 +55,9 @@ services:
   market-data-worker:
     build: { context: .., dockerfile: docker/Dockerfile, target: dev }
     container_name: market-data-worker
-    command: ["npx", "tsx", "watch", "src/infra/worker.ts"]
+    # Exits on a lost RabbitMQ connection (no in-process reconnect); unacked messages are redelivered and the projections are idempotent
+    restart: unless-stopped
+    command: ["npx", "tsx", "src/infra/worker.ts"]
     env_file: ../.env
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:3001/health"]

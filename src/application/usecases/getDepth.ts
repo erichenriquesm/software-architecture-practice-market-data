@@ -1,11 +1,9 @@
-import type { DepthDao } from '../contracts/depthDao.js';
+import type { DepthDao, DepthView } from '../contracts/depthDao.js';
 import type { MarketCatalog } from '../contracts/marketCatalog.js';
-import type { DepthView } from '../dtos/depthView.js';
 import { InvalidQueryError } from '../errors.js';
 import { knownMarket } from './knownMarket.js';
-import type { UseCase } from './useCase.js';
 
-export class GetDepth implements UseCase<[marketId: string, precision?: number], DepthView> {
+export class GetDepth {
   constructor(
     private readonly depthDao: DepthDao,
     private readonly marketCatalog: MarketCatalog,

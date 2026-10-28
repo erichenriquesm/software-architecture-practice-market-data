@@ -4,13 +4,24 @@ import { latestInstant, marketPeriod, splitByMinute } from '../calculations/mark
 import { spread } from '../calculations/spread.js';
 import type { Clock } from '../contracts/clock.js';
 import type { MarketCatalog } from '../contracts/marketCatalog.js';
-import type { MarketStatsDao } from '../contracts/marketStatsDao.js';
-import type { GetMarketInput, GetMarketOutput } from '../dtos/getMarketDto.js';
-import type { TradeStatsView } from '../dtos/marketStatsView.js';
+import type { MarketStatsDao, TradeStatsView } from '../contracts/marketStatsDao.js';
 import { knownMarket } from './knownMarket.js';
-import type { UseCase } from './useCase.js';
 
-export class GetMarket implements UseCase<[input: GetMarketInput], GetMarketOutput> {
+export interface GetMarketInput {
+  readonly marketId: string;
+  readonly startDate?: string | undefined;
+  readonly endDate?: string | undefined;
+}
+
+export interface GetMarketOutput {
+  readonly spread: string | null;
+  readonly min: string | null;
+  readonly max: string | null;
+  readonly volume: string;
+  readonly asOf: string | null;
+}
+
+export class GetMarket {
   constructor(
     private readonly marketStatsDao: MarketStatsDao,
     private readonly marketCatalog: MarketCatalog,

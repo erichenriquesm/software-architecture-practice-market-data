@@ -50,14 +50,24 @@ const checksFor = (request: FastifyRequest, group: RateLimitGroup, options: Rate
   return checks;
 };
 
+/** Fail-open: when the limiter (Redis) fails, the request goes through without limit and a warning is logged. */
+const decisionsOrNothing = async (request: FastifyRequest, group: RateLimitGroup, options: RateLimitOptions): Promise<RateLimitDecision[]> => {
+  try {
+    return await Promise.all(checksFor(request, group, options).map((check) => options.limiter.check(check)));
+  } catch (error) {
+    request.log.warn({ err: error, group: group.name }, 'rate limiter unavailable, request allowed without limit (fail-open)');
+    return [];
+  }
+};
+
 export const registerRateLimit = (app: FastifyInstance, options: RateLimitOptions): void => {
   app.addHook('preHandler', async (request: FastifyRequest, reply: FastifyReply) => {
     const group = options.groups.find((candidate) => candidate.matches(request));
     if (!group) return;
 
-    const [first, ...others] = await Promise.all(checksFor(request, group, options).map((check) => options.limiter.check(check)));
+    const decisions = await decisionsOrNothing(request, group, options);
+    const [first, ...others] = decisions;
     if (!first) return;
-    const decisions = [first, ...others];
     const decision = tightest(first, others);
     reply.header('RateLimit-Policy', decisions.map(policyHeader).join(', '));
     reply.header('RateLimit', stateHeader(decision));

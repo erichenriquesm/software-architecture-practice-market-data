@@ -49,7 +49,7 @@ make clone
 make up
 ```
 
-Containers: `market-data-api` · `market-data-worker` (projeções) · `market-data-db`. Portas no host (só para depurar): REST 3005 · Postgres 5437.
+Containers: `market-data-api` · `market-data-worker` (projeções; se perder a conexão com o RabbitMQ ele sai e o Docker o reinicia) · `market-data-db`. Sem Redis, o rate limit deixa a requisição passar e registra um aviso (fail-open). Portas no host (só para depurar): REST 3005 · Postgres 5437.
 
 Dentro da pasta do serviço (`backend/market-data/`):
 
@@ -63,7 +63,7 @@ Dentro da pasta do serviço (`backend/market-data/`):
 
 ```
 src/
-  application/   casos de uso, DTOs e contratos (interfaces)
+  application/   casos de uso (com seus Input/Output), cálculos e contratos (interfaces e as views que os DAOs devolvem)
   infra/         HTTP, mensageria, banco, plataforma técnica, schemas de eventos
 test/
   unit/  integration/  fakes/  support/

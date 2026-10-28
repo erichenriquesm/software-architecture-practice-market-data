@@ -1,5 +1,4 @@
 import type { Redis } from 'ioredis';
-import { FallbackHandler } from '../../resilience/fallbackHandler.js';
 import type { RateLimitDecision, RateLimitPolicy } from './slidingWindow.js';
 import { decide, windowPosition } from './slidingWindow.js';
 
@@ -10,32 +9,13 @@ export interface RateLimitCheck {
   readonly nowMs: number;
 }
 
+/** Implemented by RedisRateLimiter; the interface lets the plugin tests use fakes. */
 export interface RateLimiter {
   check(check: RateLimitCheck): Promise<RateLimitDecision>;
 }
 
 const bucketKey = (prefix: string, check: RateLimitCheck, bucketStart: number): string =>
   `${prefix}:rl:${check.policy.name}:${check.subject}:${bucketStart}`;
-
-export class InMemoryRateLimiter implements RateLimiter {
-  private readonly counts = new Map<string, number>();
-
-  constructor(private readonly prefix: string) {}
-
-  async check(check: RateLimitCheck): Promise<RateLimitDecision> {
-    const position = windowPosition(check.nowMs, check.policy.windowMs);
-    const currentKey = bucketKey(this.prefix, check, position.currentBucketStart);
-    const decision = decide({
-      previousCount: this.counts.get(bucketKey(this.prefix, check, position.previousBucketStart)) ?? 0,
-      currentCount: this.counts.get(currentKey) ?? 0,
-      elapsedMs: position.elapsedMs,
-      cost: check.cost,
-      policy: check.policy,
-    });
-    if (decision.allowed) this.counts.set(currentKey, (this.counts.get(currentKey) ?? 0) + check.cost);
-    return decision;
-  }
-}
 
 const slidingWindowScript = `
 local current = tonumber(redis.call('GET', KEYS[1]) or '0')
@@ -52,6 +32,7 @@ redis.call('PEXPIRE', KEYS[1], window * 2)
 return {1, current, previous}
 `;
 
+/** Sliding window counter on Redis (atomic Lua script); shared by every replica. */
 export class RedisRateLimiter implements RateLimiter {
   constructor(
     private readonly redis: Redis,
@@ -72,30 +53,5 @@ export class RedisRateLimiter implements RateLimiter {
     )) as [number, number, number];
     const [, currentCount, previousCount] = reply;
     return decide({ previousCount, currentCount, elapsedMs: position.elapsedMs, cost: check.cost, policy: check.policy });
-  }
-}
-
-class RateLimiterLink extends FallbackHandler<RateLimitCheck, RateLimitDecision> {
-  constructor(
-    private readonly limiter: RateLimiter,
-    next?: RateLimiterLink,
-  ) {
-    super(next);
-  }
-
-  protected tryHandle(check: RateLimitCheck): Promise<RateLimitDecision> {
-    return this.limiter.check(check);
-  }
-}
-
-export class FallbackRateLimiter implements RateLimiter {
-  private readonly chain: RateLimiterLink;
-
-  constructor(primary: RateLimiter, fallback: RateLimiter) {
-    this.chain = new RateLimiterLink(primary, new RateLimiterLink(fallback));
-  }
-
-  check(check: RateLimitCheck): Promise<RateLimitDecision> {
-    return this.chain.handle(check);
   }
 }

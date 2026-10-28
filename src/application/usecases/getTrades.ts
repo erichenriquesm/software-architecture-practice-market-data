@@ -1,16 +1,20 @@
 import type { MarketCatalog } from '../contracts/marketCatalog.js';
-import type { TradeDao } from '../contracts/tradeDao.js';
-import type { GetTradesInput } from '../dtos/getTradesDto.js';
-import type { TradeView } from '../dtos/tradeView.js';
+import type { TradeDao, TradeView } from '../contracts/tradeDao.js';
 import { parseInstant } from '../calculations/marketPeriod.js';
 import { InvalidQueryError } from '../errors.js';
 import { knownMarket } from './knownMarket.js';
-import type { UseCase } from './useCase.js';
+
+export interface GetTradesInput {
+  readonly marketId: string;
+  readonly limit?: number | undefined;
+  /** Only trades executed strictly before this ISO 8601 instant (pagination). */
+  readonly before?: string | undefined;
+}
 
 export const defaultTradesLimit = 50;
 export const maxTradesLimit = 500;
 
-export class GetTrades implements UseCase<[input: GetTradesInput], TradeView[]> {
+export class GetTrades {
   constructor(
     private readonly tradeDao: TradeDao,
     private readonly marketCatalog: MarketCatalog,

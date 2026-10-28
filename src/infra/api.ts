@@ -1,7 +1,7 @@
 import { Redis } from 'ioredis';
 import { buildMarketDataApi, rateLimitPrefix } from './composition.js';
 import { createDatabase } from './database/postgres.js';
-import { FallbackRateLimiter, InMemoryRateLimiter, RedisRateLimiter } from './platform/http/rateLimit/rateLimiter.js';
+import { RedisRateLimiter } from './platform/http/rateLimit/rateLimiter.js';
 import { apiPortSetting, postgresSettings, rateLimitSetting, redisSettings, trustedProxySubnets } from './settings.js';
 
 const db = createDatabase(postgresSettings());
@@ -14,7 +14,7 @@ const redis = new Redis({
 
 const { app } = buildMarketDataApi({
   db,
-  rateLimiter: new FallbackRateLimiter(new RedisRateLimiter(redis, rateLimitPrefix), new InMemoryRateLimiter(rateLimitPrefix)),
+  rateLimiter: new RedisRateLimiter(redis, rateLimitPrefix),
   rateLimits: { publicReadPerIp: rateLimitSetting('RATE_LIMITS_PUBLIC_READ_PER_IP', '1200/1m') },
   trustProxy: trustedProxySubnets(),
   logger: true,

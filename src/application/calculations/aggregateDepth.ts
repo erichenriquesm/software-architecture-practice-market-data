@@ -1,5 +1,5 @@
 import type { Decimal } from 'decimal.js';
-import type { DepthLevelView } from '../dtos/depthView.js';
+import type { DepthLevelView } from '../contracts/depthDao.js';
 import { Exact, scale } from './exact.js';
 import { priceBucket } from './priceBucket.js';
 

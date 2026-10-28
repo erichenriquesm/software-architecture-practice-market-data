@@ -1,4 +1,4 @@
-import type { TradeStatsView } from '../dtos/marketStatsView.js';
+import type { TradeStatsView } from '../contracts/marketStatsDao.js';
 import { Exact, scale } from './exact.js';
 
 const present = (values: readonly (string | null)[]) => values.flatMap((value) => (value === null ? [] : [new Exact(value)]));

@@ -1,5 +1,4 @@
-import type { TradeDao } from '../../src/application/contracts/tradeDao.js';
-import type { TradeView } from '../../src/application/dtos/tradeView.js';
+import type { TradeDao, TradeView } from '../../src/application/contracts/tradeDao.js';
 
 export class FakeTradeDao implements TradeDao {
   readonly calls: { marketId: string; limit: number; before: Date | undefined }[] = [];

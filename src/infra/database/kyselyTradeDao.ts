@@ -1,6 +1,5 @@
 import type { Kysely } from 'kysely';
-import type { TradeDao } from '../../application/contracts/tradeDao.js';
-import type { TradeView } from '../../application/dtos/tradeView.js';
+import type { TradeDao, TradeView } from '../../application/contracts/tradeDao.js';
 import type { Database } from './database.js';
 
 const columns = ['trade_id as tradeId', 'buy_order_id as buyOrderId', 'sell_order_id as sellOrderId', 'side', 'quantity', 'price', 'executed_at'] as const;
